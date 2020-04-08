@@ -91,6 +91,8 @@ int create_socket(int port, int listenQ) {
 }
 
 void handle_new_connection(int sockfd) {
+    printf("New connection.\n");
+
     char msg[] = "********************************\n"
                  "** Welcome to the BBS server. **\n"
                  "********************************\n";
