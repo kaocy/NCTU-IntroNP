@@ -5,6 +5,9 @@
 #include "client.h"
 using namespace std;
 
+extern map<int, string> clients;
+extern int current_sockfd;
+
 struct User {
     string email;
     string password;
@@ -13,7 +16,6 @@ struct User {
 };
 
 map<string, User> users; // username -> User
-
 
 void execute_register(const vector<string> &args) {
     if (args.size() < 3) {

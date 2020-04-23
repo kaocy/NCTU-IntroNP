@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "client.h"
 #include "shell.h"
+#include "bulletin.h"
 
 using namespace std;
 
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]) {
     FD_SET(server_sockfd, &allset);
 
     init_clients();
+    init_bulletin();
 
     while (true) {
         rset = allset;
