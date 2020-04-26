@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include <ctime>
 #include <vector>
 #include <map>
@@ -36,11 +38,13 @@ struct Board {
     Board(string name = "", string moderator = "") : name(name), moderator(moderator) { post_ids.clear(); }
 };
 
+vector<string> board_names;
 map<string, Board> boards; // board name -> board
 map<int, Post> posts; // post id -> post
 int next_post_id;
 
 void init_bulletin() {
+    board_names.clear();
     boards.clear();
     posts.clear();
     next_post_id = 1;
@@ -80,6 +84,7 @@ void create_board(const vector<string> &args) {
         return ;
     }
 
+    board_names.push_back(board_name);
     boards[board_name] = Board(board_name, current_username);
     send_message("Create board successfully.\n");
 }
@@ -120,21 +125,51 @@ void create_post(const vector<string> &args, const vector<string> &fields) {
 }
 
 void list_board(const vector<string> &args) {
-    send_message("\tIndex\tName\t\tModerator\n");
+    int max_index_len = 8;
+    int max_name_len = 6;
+    int max_moderator_len = 11;
+    for (string board_name : board_names) {
+        const auto& board = boards[board_name];
+        max_name_len = max(max_name_len, int(board.name.length()));
+        max_moderator_len = max(max_moderator_len, int(board.moderator.length()));
+    }
+    max_name_len += 5;
+    max_moderator_len += 5;
+
+    stringstream title_stream;
+    title_stream << "\t" << std::left << std::setfill(' ');
+    title_stream << setw(max_index_len) << "Index";
+    title_stream << setw(max_name_len) << "Name";
+    title_stream << setw(max_moderator_len) << "Moderator" << setw(1) << "\n";
+    send_message(title_stream.str());
+
     if (args.size() > 0) {
         string key = args.at(0);
         int index = 1;
-        for (const auto& kv : boards) {
-            int pos = kv.second.name.find(key);
+
+        for (string board_name : board_names) {
+            const auto& board = boards[board_name];
+            int pos = board.name.find(key);
             if (pos != -1) {
-                send_message("\t" + to_string(index++) + "\t" + kv.second.name + "\t\t" + kv.second.moderator + "\n");
+                stringstream line_stream;
+                line_stream << "\t" << std::left << std::setfill(' ');
+                line_stream << setw(max_index_len) << to_string(index++);
+                line_stream << setw(max_name_len) << board.name;
+                line_stream << setw(max_moderator_len) << board.moderator << setw(1) << "\n";
+                send_message(line_stream.str());
             }
         }
     }
     else {
         int index = 1;
-        for (const auto& kv : boards) {
-            send_message("\t" + to_string(index++) + "\t" + kv.second.name + "\t\t" + kv.second.moderator + "\n");
+        for (string board_name : board_names) {
+            const auto& board = boards[board_name];
+            stringstream line_stream;
+            line_stream << "\t" << std::left << std::setfill(' ');
+            line_stream << setw(max_index_len) << to_string(index++);
+            line_stream << setw(max_name_len) << board.name;
+            line_stream << setw(max_moderator_len) << board.moderator << setw(1) << "\n";
+            send_message(line_stream.str());
         }
     }
 }
@@ -151,7 +186,29 @@ void list_post(const vector<string> &args) {
         return ;
     }
 
-    send_message("\tID\tTitle\t\tAuthor\t\tDate\n");
+    int max_id_len = 5;
+    int max_title_len = 6;
+    int max_author_len = 11;
+    int max_date_len = 12;
+    for (int post_id : boards[board_name].post_ids) {
+        // need to check existence since post_id in board will not be deleted when deleting post
+        if (posts.find(post_id) == posts.end()) continue;
+
+        const auto& post = posts[post_id];
+        max_title_len = max(max_title_len, int(post.title.length()));
+        max_author_len = max(max_author_len, int(post.author.length()));
+    }
+    max_title_len += 5;
+    max_author_len += 5;
+
+    stringstream title_stream;
+    title_stream << "\t" << std::left << std::setfill(' ');
+    title_stream << setw(max_id_len) << "ID";
+    title_stream << setw(max_title_len) << "Title";
+    title_stream << setw(max_author_len) << "Author";
+    title_stream << setw(max_date_len) << "Date" << setw(1) << "\n";
+    send_message(title_stream.str());
+
     if (args.size() > 1) {
         string key = args.at(1);
         for (int post_id : boards[board_name].post_ids) {
@@ -162,7 +219,13 @@ void list_post(const vector<string> &args) {
             int pos = post.title.find(key);
             if (pos != -1) {
                 string date = transform_date(post.date);
-                send_message("\t" + to_string(post.id) + "\t" + post.title + "\t\t" + post.author + "\t\t" + date + "\n");
+                stringstream line_stream;
+                line_stream << "\t" << std::left << std::setfill(' ');
+                line_stream << setw(max_id_len) << to_string(post.id);
+                line_stream << setw(max_title_len) << post.title;
+                line_stream << setw(max_author_len) << post.author;
+                line_stream << setw(max_date_len) << date << setw(1) << "\n";
+                send_message(line_stream.str());
             }
         }
     }
@@ -173,7 +236,13 @@ void list_post(const vector<string> &args) {
 
             const auto& post = posts[post_id];
             string date = transform_date(post.date);
-            send_message("\t" + to_string(post.id) + "\t" + post.title + "\t\t" + post.author + "\t\t" + date + "\n");
+            stringstream line_stream;
+            line_stream << "\t" << std::left << std::setfill(' ');
+            line_stream << setw(max_id_len) << to_string(post.id);
+            line_stream << setw(max_title_len) << post.title;
+            line_stream << setw(max_author_len) << post.author;
+            line_stream << setw(max_date_len) << date << setw(1) << "\n";
+            send_message(line_stream.str());
         }
     }
 }
