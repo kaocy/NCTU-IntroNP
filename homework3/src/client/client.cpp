@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -9,15 +10,19 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <aws/core/Aws.h>
+
+#include "s3.h"
+
 using namespace std;
 
 const int MAX_LEN = 2048;
 char buf[MAX_LEN];
 int sockfd;
 
-int create_socket(string ip, int port);
-void send_to_server(string message);
-void read_from_server();
+int create_socket(string, int);
+void send_to_server(string);
+void read_from_server(string);
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
@@ -26,13 +31,14 @@ int main(int argc, char *argv[]) {
     }
 
     sockfd = create_socket(string(argv[1]), atoi(argv[2]));
-    read_from_server();
+    read_from_server("");
     while (true) {
         string input;
         getline(cin, input);
         send_to_server(input);
-        read_from_server();
+        read_from_server(input);
     }
+
     return 0;
 }
 
@@ -65,12 +71,34 @@ void send_to_server(string message) {
     int n = write(sockfd, msg, strlen(msg));
 }
 
-void read_from_server() {
+void read_from_server(string input) {
     memset(buf, 0, sizeof(buf));
     int n = read(sockfd, buf, MAX_LEN);
     if (n == 0) {
         printf("Connection closed.\n");
         exit(EXIT_FAILURE);
     }
-    printf("%s", buf);
+
+    string response = string(buf);
+    if (response.find("--arg ") == 0) {
+        stringstream ss(response);
+        string tmp, arg1, arg2;
+        ss >> tmp;
+
+        Aws::SDKOptions options;
+        Aws::InitAPI(options);
+
+        if (input.find("register") == 0) {
+            ss >> arg1;
+            create_bucket(Aws::String(arg1.c_str(), arg1.size()));
+        }
+
+        Aws::ShutdownAPI(options);
+
+        ss >> tmp;
+        cout << tmp << flush;
+    }
+    else {
+        cout << response << flush;
+    }
 }

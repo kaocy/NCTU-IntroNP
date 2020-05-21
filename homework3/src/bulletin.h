@@ -3,7 +3,6 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-#include <ctime>
 #include <vector>
 #include <map>
 #include "client.h"
@@ -48,22 +47,6 @@ void init_bulletin() {
     boards.clear();
     posts.clear();
     next_post_id = 1;
-}
-
-string get_date() {
-    time_t now = time(0);
-    tm *localtm = localtime(&now);
-    string year = to_string(localtm->tm_year + 1900);
-    string month = to_string(localtm->tm_mon + 1);
-    string day = to_string(localtm->tm_mday);
-
-    if (month.length() == 1)    month = "0" + month;
-    if (day.length() == 1)      day = "0" + day;
-    return year + "-" + month + "-" + day;
-}
-
-string transform_date(string date) {
-    return date.substr(5, 2) + "/" + date.substr(8, 2);
 }
 
 void create_board(const vector<string> &args) {

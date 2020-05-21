@@ -1,7 +1,10 @@
 #pragma once
 
 #include <iostream>
+#include <sstream>
 #include <map>
+#include <cstdlib>
+#include <ctime>
 #include "client.h"
 using namespace std;
 
@@ -11,11 +14,36 @@ extern int current_sockfd;
 struct User {
     string email;
     string password;
+    string bucket_name;
     
-    User(string email = "", string password = "") : email(email), password(password) {}
+    User(string email = "", string password = "", string bucket_name = "")
+        : email(email), password(password), bucket_name(bucket_name) {}
 };
 
 map<string, User> users; // username -> User
+
+string get_date() {
+    time_t now = time(0);
+    tm *localtm = localtime(&now);
+    string year = to_string(localtm->tm_year + 1900);
+    string month = to_string(localtm->tm_mon + 1);
+    string day = to_string(localtm->tm_mday);
+
+    if (month.length() == 1)    month = "0" + month;
+    if (day.length() == 1)      day = "0" + day;
+    return year + "-" + month + "-" + day;
+}
+
+string transform_date(string date) {
+    return date.substr(5, 2) + "/" + date.substr(8, 2);
+}
+
+string get_timestamp() {
+    time_t now = time(0);
+    stringstream ss;
+    ss << now;
+    return ss.str();
+}
 
 void execute_register(const vector<string> &args) {
     if (args.size() < 3) {
@@ -29,8 +57,13 @@ void execute_register(const vector<string> &args) {
         send_message("Username is already used.\n");
         return ;
     }
-    users[username] = User(email, password);
-    send_message("Register successfully.\n");
+    string bucket_name = "0516007-" + username + "-" + get_timestamp();
+    users[username] = User(email, password, bucket_name);
+
+    string msg = "";
+    msg += "--arg " + bucket_name + " ";
+    msg += "Register successfully.\n";
+    send_message(msg);
 }
 
 void execute_login(const vector<string> &args) {
