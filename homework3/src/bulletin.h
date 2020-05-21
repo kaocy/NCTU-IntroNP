@@ -141,7 +141,8 @@ void list_board(const vector<string> &args) {
     title_stream << setw(max_index_len) << "Index";
     title_stream << setw(max_name_len) << "Name";
     title_stream << setw(max_moderator_len) << "Moderator" << setw(1) << "\n";
-    send_message(title_stream.str());
+    string msg = "";
+    msg += title_stream.str();
 
     if (args.size() > 0) {
         string key = args.at(0);
@@ -156,7 +157,7 @@ void list_board(const vector<string> &args) {
                 line_stream << setw(max_index_len) << to_string(index++);
                 line_stream << setw(max_name_len) << board.name;
                 line_stream << setw(max_moderator_len) << board.moderator << setw(1) << "\n";
-                send_message(line_stream.str());
+                msg += line_stream.str();
             }
         }
     }
@@ -169,9 +170,10 @@ void list_board(const vector<string> &args) {
             line_stream << setw(max_index_len) << to_string(index++);
             line_stream << setw(max_name_len) << board.name;
             line_stream << setw(max_moderator_len) << board.moderator << setw(1) << "\n";
-            send_message(line_stream.str());
+            msg += line_stream.str();
         }
     }
+    send_message(msg);
 }
 
 void list_post(const vector<string> &args) {
@@ -207,7 +209,8 @@ void list_post(const vector<string> &args) {
     title_stream << setw(max_title_len) << "Title";
     title_stream << setw(max_author_len) << "Author";
     title_stream << setw(max_date_len) << "Date" << setw(1) << "\n";
-    send_message(title_stream.str());
+    string msg = "";
+    msg += title_stream.str();
 
     if (args.size() > 1) {
         string key = args.at(1);
@@ -225,7 +228,7 @@ void list_post(const vector<string> &args) {
                 line_stream << setw(max_title_len) << post.title;
                 line_stream << setw(max_author_len) << post.author;
                 line_stream << setw(max_date_len) << date << setw(1) << "\n";
-                send_message(line_stream.str());
+                msg += line_stream.str();
             }
         }
     }
@@ -242,9 +245,10 @@ void list_post(const vector<string> &args) {
             line_stream << setw(max_title_len) << post.title;
             line_stream << setw(max_author_len) << post.author;
             line_stream << setw(max_date_len) << date << setw(1) << "\n";
-            send_message(line_stream.str());
+            msg += line_stream.str();
         }
     }
+    send_message(msg);
 }
 
 void read_post(const vector<string> &args) {
@@ -308,14 +312,6 @@ void delete_post(const vector<string> &args) {
 
     posts.erase(post_id);
     send_message("Delete successfully.\n");
-    // for (auto& kv : boards) {
-    //     for (auto post_iter = kv.second.posts.begin(); post_iter != kv.second.posts.end(); post_iter++) {
-    //         if (*post_iter == post_id) {
-    //             kv.second.posts.erase(post_iter);
-    //             return ;
-    //         }
-    //     }
-    // }
 }
 
 void update_post(const vector<string> &args, const vector<string> &fields) {

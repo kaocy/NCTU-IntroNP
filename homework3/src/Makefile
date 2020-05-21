@@ -1,11 +1,14 @@
 CPP = g++
 CFLAGS = -g -Wall
-TARGET = server
+TARGET = server client
 
 all: $(TARGET)
 
 server: server.cpp
-	$(CPP) $(CFLAGS) -o $(TARGET) server.cpp
+	$(CPP) $(CFLAGS) -o server server.cpp
+
+client: client.cpp
+	$(CPP) $(CFLAGS) -o client client.cpp
 
 clean: 
 	rm -f $(TARGET)

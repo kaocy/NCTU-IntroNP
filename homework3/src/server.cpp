@@ -94,14 +94,13 @@ int create_socket(int port, int listenQ) {
 
 void handle_new_connection(int sockfd) {
     printf("New connection.\n");
+    add_client(sockfd);
 
     char msg[] = "********************************\n"
                  "** Welcome to the BBS server. **\n"
-                 "********************************\n";
+                 "********************************\n"
+                 "% ";
     write(sockfd, msg, strlen(msg));
-
-    add_client(sockfd);
-    write(sockfd, "% ", strlen("% "));
 }
 
 void handle_old_connection(int sockfd) {
@@ -110,6 +109,7 @@ void handle_old_connection(int sockfd) {
 
     string input;
     getline(cin, input);
+    // cout << input << "\n";
     execute(input);
-    write(sockfd, "% ", strlen("% "));
+    // write(sockfd, "% ", strlen("% "));
 }

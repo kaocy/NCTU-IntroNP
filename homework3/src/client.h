@@ -33,6 +33,7 @@ void remove_client() { // when a client quit the connection
 
 void send_message(string message) {
     char msg[message.length() + 5];
+    message += "% ";
     sprintf(msg, "%s", message.c_str());
     write(current_sockfd, msg, strlen(msg));
 }
