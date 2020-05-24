@@ -77,8 +77,8 @@ void read_from_server(string input) {
     memset(buf, 0, sizeof(buf));
     int n = read(sockfd, buf, MAX_LEN);
     if (n == 0) {
-        printf("Connection closed.\n");
-        exit(EXIT_FAILURE);
+        // printf("Connection closed.\n");
+        exit(EXIT_SUCCESS);
     }
 
     string response = string(buf);
@@ -97,7 +97,7 @@ void read_from_server(string input) {
             string s3_object_name = split(response, " ");
             string content = split(response, " Create post successfully.");
 
-            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            string local_file_name = "/home/kaocy/Desktop/np_local_files/" + s3_object_name + ".txt";
             fstream file;
             file.open(local_file_name, ios::out | ios::trunc);
             file << content;
@@ -112,7 +112,7 @@ void read_from_server(string input) {
             string s3_object_name = split(response, " ");
             string content = split(response, " Update successfully.");
 
-            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            string local_file_name = "/home/kaocy/Desktop/np_local_files/" + s3_object_name + ".txt";
             fstream file;
             file.open(local_file_name, ios::out | ios::trunc);
             file << content;
@@ -169,7 +169,7 @@ void read_from_server(string input) {
             string s3_object_name = split(response, " ");
             string content = split(response, " Comment successfully.");
 
-            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            string local_file_name = "/home/kaocy/Desktop/np_local_files/" + s3_object_name + ".txt";
             fstream file;
             file.open(local_file_name, ios::out | ios::trunc);
             file << content;
@@ -184,7 +184,7 @@ void read_from_server(string input) {
             string s3_object_name = split(response, " ");
             string content = split(response, " Sent successfully.");
 
-            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            string local_file_name = "/home/kaocy/Desktop/np_local_files/" + s3_object_name + ".txt";
             fstream file;
             file.open(local_file_name, ios::out | ios::trunc);
             file << content;
@@ -215,7 +215,6 @@ void read_from_server(string input) {
                 content.erase(0, pos + 4);
             }
             response += "\n";
-            response += "\t--\n";
             response += "% ";
         }
         if (input.find("delete-mail") == 0) {

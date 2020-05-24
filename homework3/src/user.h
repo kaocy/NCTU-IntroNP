@@ -70,7 +70,13 @@ void execute_register(const vector<string> &args) {
         send_message("Username is already used.\n");
         return ;
     }
-    string s3_bucket_name = "0516007-" + username + "-" + get_timestamp();
+
+    string username_lower;
+    for (char c : username) {
+        if (c >= 'A' && c <= 'Z') username_lower += char(c - 'A' + 'a');
+        else                      username_lower += c;
+    }
+    string s3_bucket_name = "0516007-" + username_lower + "-" + get_timestamp();
     users[username] = User(email, password, s3_bucket_name);
 
     string msg = "";
@@ -214,7 +220,7 @@ void retr_mail(const vector<string> &args) {
 
     int mail_id = stoi(args.at(0));
     if (mail_id < 1 || mail_id > int(users[current_username].mails.size())) {
-        send_message("No such mail\n");
+        send_message("No such mail.\n");
         return ;
     }
 
@@ -244,7 +250,7 @@ void delete_mail(const vector<string> &args) {
 
     int mail_id = stoi(args.at(0));
     if (mail_id < 1 || mail_id > int(users[current_username].mails.size())) {
-        send_message("No such mail\n");
+        send_message("No such mail.\n");
         return ;
     }
 
