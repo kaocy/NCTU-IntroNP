@@ -102,6 +102,33 @@ vector<string> parse_comment(string input) {
     return args;
 }
 
+vector<string> parse_mail(string input) {
+    vector<string> args;
+    args.clear();
+    string username = split(input, " ");
+    while (input.length() > 0) {
+        remove_space(input);
+        if (input.length() == 0)    break;
+
+        string arg = split(input, " ");
+        if (arg == "--subject" || arg == "--content") {
+            remove_space(input);
+            int pos = input.find("--");
+            if (pos == -1) {
+                arg = input;
+                input = "";
+            }
+            else {
+                arg = input.substr(0, pos);
+                input.erase(0, pos);
+            }
+            if (arg.back() == ' ')  arg.pop_back();
+        }
+        args.push_back(arg);
+    }
+    return args;
+}
+
 void execute(string input) {
     // clear '\r' added by telnet
     if (input.back() == '\r')   input.pop_back();
@@ -116,6 +143,9 @@ void execute(string input) {
     }
     else if (cmd_name == "comment") {
         args = parse_comment(input);
+    }
+    else if (cmd_name == "mail-to") {
+        args = parse_mail(input);
     }
     else {
         args = parse(input);
@@ -134,4 +164,8 @@ void execute(string input) {
     if (cmd_name == "delete-post")  delete_post(args);
     if (cmd_name == "update-post")  update_post(args, fields);
     if (cmd_name == "comment")      comment(args);
+    if (cmd_name == "mail-to")      mail_to(args);
+    if (cmd_name == "list-mail")    list_mail();
+    if (cmd_name == "retr-mail")    retr_mail(args);
+    if (cmd_name == "delete-mail")  delete_mail(args);
 }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <cstdio>
 #include <cstdlib>
@@ -23,6 +24,7 @@ int sockfd;
 int create_socket(string, int);
 void send_to_server(string);
 void read_from_server(string);
+string split(string&, string);
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
@@ -81,24 +83,157 @@ void read_from_server(string input) {
 
     string response = string(buf);
     if (response.find("--arg ") == 0) {
-        stringstream ss(response);
-        string tmp, arg1, arg2;
-        ss >> tmp;
+        response = response.substr(6);
 
         Aws::SDKOptions options;
         Aws::InitAPI(options);
 
         if (input.find("register") == 0) {
-            ss >> arg1;
-            create_bucket(Aws::String(arg1.c_str(), arg1.size()));
+            string s3_bucket_name = split(response, " ");
+            create_bucket(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()));
+        }
+        if (input.find("create-post") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+            string content = split(response, " Create post successfully.");
+
+            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            fstream file;
+            file.open(local_file_name, ios::out | ios::trunc);
+            file << content;
+            file.close();
+            
+            upload_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                        Aws::String(s3_object_name.c_str(), s3_object_name.size()),
+                        local_file_name);
+        }
+        if (input.find("update-post") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+            string content = split(response, " Update successfully.");
+
+            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            fstream file;
+            file.open(local_file_name, ios::out | ios::trunc);
+            file << content;
+            file.close();
+            
+            upload_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                        Aws::String(s3_object_name.c_str(), s3_object_name.size()),
+                        local_file_name);
+        }
+        if (input.find("read") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+            
+            string content = \
+            get_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                       Aws::String(s3_object_name.c_str(), s3_object_name.size()));
+
+            response.pop_back();
+            response.pop_back();
+            response += "\t--\n";
+            while (content != "") {
+                int pos = content.find("<br>");
+                if (pos == -1) {
+                    response += "\t" + content;
+                    break;
+                }
+                response += "\t" + content.substr(0, pos) + "\n";
+                content.erase(0, pos + 4);
+            }
+            response += "\n";
+            response += "\t--\n";
+
+            if (response.find("\tAuthor\t:") > 0) {
+                string s = split(response, " \tAuthor\t:");
+                stringstream ss(s);
+                string comment_s3_object_name;
+                while (ss >> comment_s3_object_name) {
+                    response += \
+                    get_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                            Aws::String(comment_s3_object_name.c_str(), comment_s3_object_name.size()));
+                }
+            }
+            response += "% ";
+        }
+        if (input.find("delete-post") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+
+            delete_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                        Aws::String(s3_object_name.c_str(), s3_object_name.size()));
+        }
+        if (input.find("comment") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+            string content = split(response, " Comment successfully.");
+
+            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            fstream file;
+            file.open(local_file_name, ios::out | ios::trunc);
+            file << content;
+            file.close();
+            
+            upload_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                        Aws::String(s3_object_name.c_str(), s3_object_name.size()),
+                        local_file_name);
+        }
+        if (input.find("mail-to") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+            string content = split(response, " Sent successfully.");
+
+            string local_file_name = "../../local_files/" + s3_object_name + ".txt";
+            fstream file;
+            file.open(local_file_name, ios::out | ios::trunc);
+            file << content;
+            file.close();
+
+            upload_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                        Aws::String(s3_object_name.c_str(), s3_object_name.size()),
+                        local_file_name);
+        }
+        if (input.find("retr-mail") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+            
+            string content = \
+            get_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                       Aws::String(s3_object_name.c_str(), s3_object_name.size()));
+
+            response.pop_back();
+            response.pop_back();
+            response += "\t--\n";
+            while (content != "") {
+                int pos = content.find("<br>");
+                if (pos == -1) {
+                    response += "\t" + content;
+                    break;
+                }
+                response += "\t" + content.substr(0, pos) + "\n";
+                content.erase(0, pos + 4);
+            }
+            response += "\n";
+            response += "\t--\n";
+            response += "% ";
+        }
+        if (input.find("delete-mail") == 0) {
+            string s3_bucket_name = split(response, " ");
+            string s3_object_name = split(response, " ");
+
+            delete_object(Aws::String(s3_bucket_name.c_str(), s3_bucket_name.size()),
+                        Aws::String(s3_object_name.c_str(), s3_object_name.size()));
         }
 
         Aws::ShutdownAPI(options);
+    }
+    cout << response << flush;
+}
 
-        ss >> tmp;
-        cout << tmp << flush;
-    }
-    else {
-        cout << response << flush;
-    }
+string split(string& str, string delim) {
+    int pos = str.find(delim);
+    string res = str.substr(0, pos);
+    str = str.substr(pos + 1);
+    return res;
 }

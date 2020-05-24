@@ -12,22 +12,20 @@ using namespace std;
 
 extern map<int, string> clients;
 extern int current_sockfd;
-
-struct Comment {
-    string content;
-    string author;
-    Comment(string content = "", string author = "") : content(content), author(author) {}
-};
+extern map<string, User> users;
 
 struct Post {
     int id;
     string title;
-    string content;
     string author;
     string date;
-    vector<Comment> comments;
-    Post(int id = 0, string title = "", string content = "", string author = "", string date = "")
-        : id(id), title(title), content(content), author(author), date(date) { comments.clear(); }
+    
+    string s3_bucket_name;
+    string s3_object_name;
+    vector<string> comment_s3_object_names;
+
+    Post(int id = 0, string title = "", string author = "", string date = "", string s3_bucket_name = "", string s3_object_name = "")
+        : id(id), title(title), author(author), date(date), s3_bucket_name(s3_bucket_name), s3_object_name(s3_object_name) { comment_s3_object_names.clear(); }
 };
 
 struct Board {
@@ -101,10 +99,17 @@ void create_post(const vector<string> &args, const vector<string> &fields) {
     }
     string date = get_date();
 
-    Post post(next_post_id, title, content, current_username, date);
+    string s3_bucket_name = users[current_username].s3_bucket_name;
+    string s3_object_name = "0516007-post-" + current_username + "-" + get_timestamp();
+
+    Post post(next_post_id, title, current_username, date, s3_bucket_name, s3_object_name);
     posts[next_post_id] = post;
     boards[board_name].post_ids.push_back(next_post_id++);
-    send_message("Create post successfully.\n");
+
+    string msg = "";
+    msg += "--arg " + s3_bucket_name + " " + s3_object_name + " " + content + " ";
+    msg += "Create post successfully.\n";
+    send_message(msg);
 }
 
 void list_board(const vector<string> &args) {
@@ -246,27 +251,18 @@ void read_post(const vector<string> &args) {
         return ;
     }
 
+    string s3_bucket_name = posts[post_id].s3_bucket_name;
+    string s3_object_name = posts[post_id].s3_object_name;
+
     string msg = "";
+    msg += "--arg " + s3_bucket_name + " " + s3_object_name + " ";
+    for (string s3_object_name : posts[post_id].comment_s3_object_names) {
+        msg += s3_object_name + " ";
+    }
+
     msg += "\tAuthor\t:" + posts[post_id].author + "\n";
     msg += "\tTitle\t:" + posts[post_id].title + "\n";
     msg += "\tDate\t:" + posts[post_id].date + "\n";
-    msg += "\t--\n";
-
-    string content = posts[post_id].content;
-    while (content != "") {
-        int pos = content.find("<br>");
-        if (pos == -1) {
-            msg += "\t" + content + "\n";
-            break;
-        }
-        msg += "\t" + content.substr(0, pos) + "\n";
-        content.erase(0, pos + 4);
-    }
-    msg += "\t--\n";
-    
-    for (const auto& comment : posts[post_id].comments) {
-        msg += "\t" + comment.author + ": " + comment.content + "\n";
-    }
     send_message(msg);
 }
 
@@ -293,8 +289,14 @@ void delete_post(const vector<string> &args) {
         return ;
     }
 
+    string s3_bucket_name = posts[post_id].s3_bucket_name;
+    string s3_object_name = posts[post_id].s3_object_name;
     posts.erase(post_id);
-    send_message("Delete successfully.\n");
+
+    string msg = "";
+    msg += "--arg " + s3_bucket_name + " " + s3_object_name + " ";
+    msg += "Delete successfully.\n";
+    send_message(msg);
 }
 
 void update_post(const vector<string> &args, const vector<string> &fields) {
@@ -320,19 +322,31 @@ void update_post(const vector<string> &args, const vector<string> &fields) {
         return ;
     }
 
+    string content = "";
     if (fields.at(0) == "title") {
         posts[post_id].title = args.at(1);
     }
     if (fields.at(0) == "content") {
-        posts[post_id].content = args.at(1);
+        content = args.at(1);
     }
     if (fields.size() == 2 && fields.at(1) == "title") {
         posts[post_id].title = args.at(2);
     }
     if (fields.size() == 2 && fields.at(1) == "content") {
-        posts[post_id].content = args.at(2);
+        content = args.at(2);
     }
-    send_message("Update successfully.\n");
+    if (content == "") {
+        send_message("Update successfully.\n");
+        return ;
+    }
+
+    string s3_bucket_name = posts[post_id].s3_bucket_name;
+    string s3_object_name = posts[post_id].s3_object_name;
+
+    string msg = "";
+    msg += "--arg " + s3_bucket_name + " " + s3_object_name + " " + content + " ";
+    msg += "Update successfully.\n";
+    send_message(msg);
 }
 
 void comment(const vector<string> &args) {
@@ -353,7 +367,14 @@ void comment(const vector<string> &args) {
         return ;
     }
 
+    string s3_bucket_name = posts[post_id].s3_bucket_name;
+    string s3_object_name = "0516007-comment-" + current_username + "-" + get_timestamp();
     string content = args.at(1);
-    posts[post_id].comments.emplace_back(content, current_username);
-    send_message("Comment successfully.\n");
+    content = "\t" + current_username + ": " + content + "\n";
+    posts[post_id].comment_s3_object_names.push_back(s3_object_name);
+
+    string msg = "";
+    msg += "--arg " + s3_bucket_name + " " + s3_object_name + " " + content + " ";
+    msg += "Comment successfully.\n";
+    send_message(msg);
 }
