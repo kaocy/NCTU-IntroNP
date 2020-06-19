@@ -64,6 +64,12 @@ void execute_login(const vector<string> &args) {
     }
     clients[current_sockfd] = username;
     send_message("Welcome, " + username + ".\n");
+
+    // clear subscription
+    for (auto &sub : users[username].subs) {
+        sub.keywords.clear();
+    }
+    users[username].subs.clear();
 }
 
 void execute_logout() {

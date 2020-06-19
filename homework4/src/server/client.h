@@ -37,3 +37,10 @@ void send_message(string message) {
     sprintf(msg, "%s", message.c_str());
     write(current_sockfd, msg, strlen(msg));
 }
+
+void send_subscription(string message, int sockfd) {
+    char msg[message.length() + 5];
+    message += "% ";
+    sprintf(msg, "%s", message.c_str());
+    write(sockfd, msg, strlen(msg));
+}

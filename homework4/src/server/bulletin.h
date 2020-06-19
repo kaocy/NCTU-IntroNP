@@ -124,6 +124,28 @@ void create_post(const vector<string> &args, const vector<string> &fields) {
     posts[next_post_id] = post;
     boards[board_name].post_ids.push_back(next_post_id++);
     send_message("Create post successfully.\n");
+
+    // notification for user subscription
+    string msg = "*[" + board_name + "] " + title + " - by " + current_username + "*\n";
+    for (auto &kv : clients) {
+        string username = kv.second;
+        if (username == "")    continue;
+
+        bool send = false;
+        for (const auto &sub : users[username].subs) {
+            if (sub.board == board_name || sub.author == current_username) {
+                for (string keyword : sub.keywords) {
+                    int pos = title.find(keyword);
+                    if (pos != -1) {
+                        send_subscription(msg, kv.first);
+                        send = true;
+                        break;
+                    }
+                }
+            }
+            if (send)   break;
+        }
+    }
 }
 
 void list_board(const vector<string> &args) {
@@ -314,14 +336,6 @@ void delete_post(const vector<string> &args) {
 
     posts.erase(post_id);
     send_message("Delete successfully.\n");
-    // for (auto& kv : boards) {
-    //     for (auto post_iter = kv.second.posts.begin(); post_iter != kv.second.posts.end(); post_iter++) {
-    //         if (*post_iter == post_id) {
-    //             kv.second.posts.erase(post_iter);
-    //             return ;
-    //         }
-    //     }
-    // }
 }
 
 void update_post(const vector<string> &args, const vector<string> &fields) {
@@ -449,7 +463,7 @@ void unsubscribe(const vector<string> &args, string first_field) {
     }
 
     if (sub_index == -1) {
-        send_message("You haven't subscribe " + args[0] + "\n");
+        send_message("You haven't subscribed " + args[0] + ".\n");
         return ;
     }
 
@@ -465,25 +479,30 @@ void list_sub() {
         return ;
     }
 
-    string sub_board = "Board: ";
-    string sub_author = "Author: ";
+    string sub_board = "";
+    string sub_author = "";
     auto &subs = users[current_username].subs;
     for (auto &sub : subs) {
         int size = sub.keywords.size();
         if (sub.board != "") {
-            if (sub_board != "Board: ") sub_board += "; ";
+            if (sub_board != "") sub_board += "; ";
+
             sub_board += sub.board + ": " + sub.keywords[0];
             for (int i = 1; i < size; i++) {
                 sub_board += ", " + sub.keywords[i];
             }
         }
         if (sub.author != "") {
-            if (sub_author != "Author: ") sub_author += "; ";
+            if (sub_author != "") sub_author += "; ";
+
             sub_author += sub.author + ": " + sub.keywords[0];
             for (int i = 1; i < size; i++) {
                 sub_author += ", " + sub.keywords[i];
             }
         }
     }
-    send_message(sub_board + "\n" + sub_author + "\n");
+    string msg = "";
+    if (sub_board != "")    msg += "Board: " + sub_board + "\n";
+    if (sub_author != "")   msg += "Author: " + sub_author + "\n";
+    send_message(msg);
 }
