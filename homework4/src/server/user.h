@@ -8,11 +8,20 @@ using namespace std;
 extern map<int, string> clients;
 extern int current_sockfd;
 
+struct Subscription {
+    string board;
+    string author;
+    vector<string> keywords;
+
+    Subscription(string board = "", string author = "") : board(board), author(author) { keywords.clear(); }
+};
+
 struct User {
     string email;
     string password;
+    vector<Subscription> subs;
     
-    User(string email = "", string password = "") : email(email), password(password) {}
+    User(string email = "", string password = "") : email(email), password(password) { subs.clear(); }
 };
 
 map<string, User> users; // username -> User

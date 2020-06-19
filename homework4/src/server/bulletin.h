@@ -6,12 +6,14 @@
 #include <ctime>
 #include <vector>
 #include <map>
+#include <algorithm>
 #include "client.h"
 #include "user.h"
 
 using namespace std;
 
 extern map<int, string> clients;
+extern map<string, User> users;
 extern int current_sockfd;
 
 struct Comment {
@@ -381,4 +383,107 @@ void comment(const vector<string> &args) {
     string content = args.at(1);
     posts[post_id].comments.emplace_back(content, current_username);
     send_message("Comment successfully.\n");
+}
+
+void subscribe(const vector<string> &args, string first_field) {
+    string current_username = clients[current_sockfd];
+    if (current_username == "") {
+        send_message("Please login first.\n");
+        return ;
+    }
+
+    if (args.size() < 2) {
+        send_message("Usage: subscribe --" + first_field + " <" + first_field + "-name> --keyword <keyword>\n");
+        return ;
+    }
+
+    string board_name = "", author_name = "", keyword = args[1];
+    if (first_field == "board") board_name = args[0];
+    if (first_field == "author") author_name = args[0];
+
+    auto &subs = users[current_username].subs;
+    for (auto &sub : subs) {
+        if ((first_field == "board" && sub.board == board_name) || 
+            (first_field == "author" && sub.author == author_name)) {
+            if (find(sub.keywords.begin(), sub.keywords.end(), keyword) != sub.keywords.end()) {
+                send_message("Already subscribed.\n");
+            }
+            else {
+                sub.keywords.push_back(keyword);
+                send_message("Subscribe successfully.\n");
+            }
+            return ;
+        }
+    }
+
+    subs.emplace_back(board_name, author_name);
+    subs.back().keywords.push_back(keyword);
+    send_message("Subscribe successfully.\n");
+}
+
+void unsubscribe(const vector<string> &args, string first_field) {
+    string current_username = clients[current_sockfd];
+    if (current_username == "") {
+        send_message("Please login first.\n");
+        return ;
+    }
+
+    if (args.size() < 1) {
+        send_message("Usage: unsubscribe --" + first_field + " <" + first_field + "-name>\n");
+        return ;
+    }
+
+    string board_name = "", author_name = "";
+    if (first_field == "board") board_name = args[0];
+    if (first_field == "author") author_name = args[0];
+    
+    auto &subs = users[current_username].subs;
+    int size = users[current_username].subs.size();
+    int sub_index = -1;
+    for (int i = 0; i < size; i++) {
+        if ((first_field == "board" && subs[i].board == board_name) || 
+            (first_field == "author" && subs[i].author == author_name)) {
+            sub_index = i;
+            break;
+        }
+    }
+
+    if (sub_index == -1) {
+        send_message("You haven't subscribe " + args[0] + "\n");
+        return ;
+    }
+
+    subs[sub_index].keywords.clear();
+    subs.erase(subs.begin() + sub_index);
+    send_message("Unsubscribe successfully.\n");
+}
+
+void list_sub() {
+    string current_username = clients[current_sockfd];
+    if (current_username == "") {
+        send_message("Please login first.\n");
+        return ;
+    }
+
+    string sub_board = "Board: ";
+    string sub_author = "Author: ";
+    auto &subs = users[current_username].subs;
+    for (auto &sub : subs) {
+        int size = sub.keywords.size();
+        if (sub.board != "") {
+            if (sub_board != "Board: ") sub_board += "; ";
+            sub_board += sub.board + ": " + sub.keywords[0];
+            for (int i = 1; i < size; i++) {
+                sub_board += ", " + sub.keywords[i];
+            }
+        }
+        if (sub.author != "") {
+            if (sub_author != "Author: ") sub_author += "; ";
+            sub_author += sub.author + ": " + sub.keywords[0];
+            for (int i = 1; i < size; i++) {
+                sub_author += ", " + sub.keywords[i];
+            }
+        }
+    }
+    send_message(sub_board + "\n" + sub_author + "\n");
 }

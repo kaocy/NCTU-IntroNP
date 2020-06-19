@@ -102,6 +102,44 @@ vector<string> parse_comment(string input) {
     return args;
 }
 
+vector<string> parse_subscribe(string input) {
+    vector<string> args;
+    args.clear();
+    while (input.length() > 0) {
+        remove_space(input);
+        if (input.length() == 0)    break;
+
+        string arg = split(input, " ");
+        if (arg == "--board" || arg == "--author" || arg == "--keyword") {
+            remove_space(input);
+            int pos = input.find("--");
+            if (pos == -1) {
+                arg = input;
+                input = "";
+            }
+            else {
+                arg = input.substr(0, pos);
+                input.erase(0, pos);
+            }
+            if (arg.back() == ' ')  arg.pop_back();
+        }
+        args.push_back(arg);
+    }
+    return args;
+}
+
+string find_subscribe_fields(string input) {
+    int pos1 = input.find("--board");
+    int pos2 = input.find("--author");
+    if (pos1 != -1) {
+        return "board";
+    }
+    if (pos2 != -1) {
+        return "author";
+    }
+    return "";
+}
+
 void execute(string input) {
     // clear '\r' added by telnet
     if (input.back() == '\r')   input.pop_back();
@@ -110,12 +148,17 @@ void execute(string input) {
     string cmd_name = split(input, " ");
     vector<string> args;
     vector<string> fields;
+    string first_field_sub = "";
     if (cmd_name == "create-post" || cmd_name == "update-post") {
         args = parse_post(input);
         fields = find_post_fields(input);
     }
     else if (cmd_name == "comment") {
         args = parse_comment(input);
+    }
+    else if (cmd_name == "subscribe" || cmd_name == "unsubscribe") {
+        args = parse_subscribe(input);
+        first_field_sub = find_subscribe_fields(input);
     }
     else {
         args = parse(input);
@@ -134,4 +177,7 @@ void execute(string input) {
     if (cmd_name == "delete-post")  delete_post(args);
     if (cmd_name == "update-post")  update_post(args, fields);
     if (cmd_name == "comment")      comment(args);
+    if (cmd_name == "subscribe")    subscribe(args, first_field_sub);
+    if (cmd_name == "unsubscribe")  unsubscribe(args, first_field_sub);
+    if (cmd_name == "list-sub")     list_sub();
 }
