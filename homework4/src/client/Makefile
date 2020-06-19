@@ -1,5 +1,5 @@
 CPP = g++
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -pthread
 TARGET = client
 
 all: $(TARGET)
